@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# Script: search_spaces.sh
+# Usage: ./search_spaces.sh <filename> [options]
+# Options:
+#   --count     Show total number of lines containing spaces
+#   --all       Show every occurrence (even multiple spaces per line)
+#   --trim      Also detect lines with leading/trailing spaces
+
+COUNT=false
+ALL=false
+TRIM=false
+
+# Parse options
+while [[ "$1" == --* ]]; do
+    case "$1" in
+        --count) COUNT=true ;;
+        --all)   ALL=true ;;
+        --trim)  TRIM=true ;;
+        *) echo "Unknown option: $1"; exit 1 ;;
+    esac
+    shift
+done
+
+# Require filename
+if [ $# -lt 1 ]; then
+    echo "Usage: $0 <filename> [--count] [--all] [--trim]"
+    echo "Example: $0 myfile.txt --count --trim"
+    exit 1
+fi
+
+filename="$1"
+
+# Check if file exists and is readable
+if [ ! -f "$filename" ]; then
+    echo "Error: File '$filename' does not exist."
+    exit 1
+fi
+
+if [ ! -r "$filename" ]; then
+    echo "Error: File '$filename' is not readable."
+    exit 1
+fi
+
+echo "Searching for spaces in '$filename'..."
+echo "-------------------------------------------------"
+
+# Basic search: lines containing at least one space
+if [ "$TRIM" = true ]; then
+    # Detect leading or trailing spaces
+    echo "Lines with leading or trailing spaces:"
+    grep -n '^[[:space:]]\|[[:space:]]$' "$filename" | sed 's/^/  /'
+    echo ""
+fi
+
+# Main search
+if [ "$ALL" = true ]; then
+    # Highlight every sequence of spaces (useful for multiple spaces)
+    grep -n -o '[[:space:]]\+' "$filename" | sed 's/^/  /'
+else
+    # Default: show lines with at least one space
+    grep -n '[[:space:]]' "$filename" | sed 's/^/  /'
+fi
+
+# Check if any spaces were found
+if [ $? -ne 0 ]; then
+    echo "No spaces found in '$filename'."
+    exit 0
+fi
+
+# Optional: count lines with spaces
+if [ "$COUNT" = true ]; then
+    count=$(grep -c '[[:space:]]' "$filename")
+    echo "-------------------------------------------------"
+    echo "Total lines containing spaces: $count"
+fi

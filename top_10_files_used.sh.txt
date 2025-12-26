@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Script: top_files.sh
+# Usage: ./top_files.sh [directory] [number]
+#   directory: Path to search (default: current directory '.')
+#   number:    Top N files to show (default: 10)
+
+DIR="${1:-.}"
+NUM="${2:-10}"
+
+# Validate directory
+if [ ! -d "$DIR" ]; then
+    echo "Error: Directory '$DIR' does not exist or is not a directory."
+    exit 1
+fi
+
+echo "Searching in directory: $DIR"
+echo "Top $NUM largest files (by size):"
+echo "---------------------------------------------"
+find "$DIR" -type f -exec du -h {} + 2>/dev/null | sort -rh | head -n "$NUM" | nl
+
+echo ""
+echo "Top $NUM most recently accessed files (by access time):"
+echo "---------------------------------------------"
+find "$DIR" -type f -printf '%A@ %p\n' 2>/dev/null | sort -nr | head -n "$NUM" | cut -d' ' -f2- | xargs -I {} ls -l --time=atime {} | nl
+
+echo ""
+echo "Note: Access time may not update on some systems (e.g., if noatime mount option is used)."
